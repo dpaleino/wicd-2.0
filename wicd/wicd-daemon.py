@@ -128,6 +128,8 @@ def main(argv):
 
     options, arguments = p.parse_args()
 
+    if not options.no_daemon: daemonize()
+
     logging.info('Wicd starting...')
 
     # Open the DBUS session
