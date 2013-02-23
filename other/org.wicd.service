@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=org.wicd
+Exec=/bin/false
+User=root

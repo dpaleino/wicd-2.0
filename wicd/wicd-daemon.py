@@ -66,6 +66,11 @@ class WicdDaemon(dbus.service.Object):
 			bus_name=bus_name, object_path=object_path
 		)
 
+    @dbus.service.method('org.wicd')
+    def GetVersion(self):
+        """ Returns the version number. """
+        return "2.0"
+
 def daemonize():
     """ Disconnect from the controlling terminal.
 
