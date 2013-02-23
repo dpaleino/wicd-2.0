@@ -137,8 +137,6 @@ def main(argv):
 
     gobject.threads_init()
 
-    signal.signal(signal.SIGTERM, sigterm_caught)
-
     # Enter the main loop
     mainloop = gobject.MainLoop()
     mainloop.run()
