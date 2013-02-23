@@ -63,7 +63,7 @@ class WicdDaemon(dbus.service.Object):
     def __init__(self, bus_name, options, object_path="/org/wicd"):
         """ Creates a new WicdDaemon object. """
         super(WicdDaemon, self).__init__(
-			self, bus_name=bus_name, object_path=object_path
+			bus_name=bus_name, object_path=object_path
 		)
 
 def daemonize():
