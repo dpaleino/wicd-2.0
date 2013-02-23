@@ -41,6 +41,24 @@ else:
     from dbus.mainloop.glib import DBusGMainLoop
     DBusGMainLoop(set_as_default=True)
 
+import logging, logging.handlers
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(levelname)-8s %(message)s',
+                    datefmt='%Y%b%d %H:%M:%S')
+
+logfile = logging.handlers.RotatingFileHandler('/var/log/wicd/wicd.log',
+                                               maxBytes=1024*1024,
+                                               backupCount=3)
+
+logfile.setFormatter(
+    logging.Formatter(
+        '%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d: %(message)s'
+        )
+    )
+
+logging.getLogger().addHandler(logfile)
+
 class WicdDaemon(dbus.service.Object):
     def __init__(self, bus_name, options, object_path="/org/wicd"):
         """ Creates a new WicdDaemon object. """
@@ -66,7 +84,7 @@ def daemonize():
         if pid > 0:
             sys.exit(0)
     except OSError, e:
-        print >> sys.stderr, "Fork #1 failed: %d (%s)" % (e.errno, e.strerror)
+        logging.critical("Fork #1 failed: %d (%s)" % (e.errno, e.strerror))
         sys.exit(1)
 
     # Decouple from parent environment to stop us from being a zombie.
@@ -83,7 +101,7 @@ def daemonize():
             pidfile.close()
             sys.exit(0)
     except OSError, e:
-        print >> sys.stderr, "Fork #2 failed: %d (%s)" % (e.errno, e.strerror)
+        logging.critical("Fork #2 failed: %d (%s)" % (e.errno, e.strerror))
         sys.exit(1)
 
     sys.stdout.flush()
@@ -110,7 +128,7 @@ def main(argv):
 
     options, arguments = p.parse_args()
 
-    print 'Wicd starting...'
+    logging.info('Wicd starting...')
 
     # Open the DBUS session
     bus = dbus.SystemBus()
@@ -128,7 +146,7 @@ def main(argv):
 if __name__ == '__main__':
     # Check if the root user is running
     if os.getuid() != 0:
-        print "Root privileges are required for the daemon to run properly."
+        logging.critical("Root privileges are required for the daemon to run properly.")
         sys.exit(1)
 
     main(sys.argv)
