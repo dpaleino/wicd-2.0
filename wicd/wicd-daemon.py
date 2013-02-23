@@ -31,7 +31,7 @@ def main() -- The wicd daemon main loop.
 import os
 import sys
 import gobject
-import optparse
+import argparse
 
 import dbus
 import dbus.service
@@ -121,12 +121,12 @@ def main(argv):
 
     """
 
-    p = optparse.OptionParser()
-    p.add_option('--no-daemon', '-f', action='store_true')
-    p.add_option('--no-stdout', '-o', action='store_true')
-    p.add_option('--no-stderr', '-e', action='store_true')
+    p = argparse.ArgumentParser()
+    p.add_argument('-f', '--no-daemon', action='store_true')
+    p.add_argument('-o', '--no-stdout', action='store_true')
+    p.add_argument('-e', '--no-stderr', action='store_true')
 
-    options, arguments = p.parse_args()
+    options = p.parse_args()
 
     if not options.no_daemon: daemonize()
 
