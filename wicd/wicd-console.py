@@ -1,5 +1,5 @@
 #!/usr/bin/python -i
-
+# -*- encoding: utf-8 -*-
 # Copyright © 2013, David Paleino <d.paleino@gmail.com>
 #
 # This program is free software; you can redistribute it and/or modify
