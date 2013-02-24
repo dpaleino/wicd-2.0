@@ -43,33 +43,29 @@ else:
 
 import logging, logging.handlers
 
-logging.basicConfig(level=logging.DEBUG,
+
+def setup_logging():
+    """
+    Setup the logging facility.
+    This function must be called before everything else, to allow
+    very early logging of messages.
+    """
+
+    logging.basicConfig(level=logging.DEBUG,
                     format='%(levelname)-8s %(message)s',
                     datefmt='%Y%b%d %H:%M:%S')
-
-logfile = logging.handlers.RotatingFileHandler('/var/log/wicd/wicd.log',
-                                               maxBytes=1024*1024,
-                                               backupCount=3)
-
-logfile.setFormatter(
-    logging.Formatter(
-        '%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d: %(message)s'
+    logfile = logging.handlers.RotatingFileHandler(
+        '/var/log/wicd/wicd.log',
+        maxBytes=1024*1024,
+        backupCount=3
+    )
+    logfile.setFormatter(
+        logging.Formatter(
+            '%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d: %(message)s'
         )
     )
+    logging.getLogger().addHandler(logfile)
 
-logging.getLogger().addHandler(logfile)
-
-class WicdDaemon(dbus.service.Object):
-    def __init__(self, bus_name, options, object_path="/org/wicd"):
-        """ Creates a new WicdDaemon object. """
-        super(WicdDaemon, self).__init__(
-			bus_name=bus_name, object_path=object_path
-		)
-
-    @dbus.service.method('org.wicd')
-    def GetVersion(self):
-        """ Returns the version number. """
-        return "2.0"
 
 def daemonize():
     """ Disconnect from the controlling terminal.
@@ -118,6 +114,20 @@ def daemonize():
     # stdin always from /dev/null
     sys.stdin = open('/dev/null', 'r')
 
+
+class WicdDaemon(dbus.service.Object):
+    def __init__(self, bus_name, options, object_path="/org/wicd"):
+        """ Creates a new WicdDaemon object. """
+        super(WicdDaemon, self).__init__(
+			bus_name=bus_name, object_path=object_path
+		)
+
+    @dbus.service.method('org.wicd')
+    def GetVersion(self):
+        """ Returns the version number. """
+        return "2.0"
+
+
 def main(argv):
     """ The main daemon program.
 
@@ -149,6 +159,7 @@ def main(argv):
     mainloop.run()
 
 if __name__ == '__main__':
+    setup_logging()
     # Check if the root user is running
     if os.getuid() != 0:
         logging.critical("Root privileges are required for the daemon to run properly.")
