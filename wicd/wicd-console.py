@@ -15,11 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import dbus
-if getattr(dbus, 'version', (0, 0, 0)) < (0, 80, 0):
-    import dbus.glib
-else:
-    from dbus.mainloop.glib import DBusGMainLoop
-    DBusGMainLoop(set_as_default=True)
+from dbus.mainloop.glib import DBusGMainLoop
+DBusGMainLoop(set_as_default=True)
 
 bus = dbus.SystemBus()
 proxy = bus.get_object('org.wicd', '/org/wicd')

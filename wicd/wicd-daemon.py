@@ -35,11 +35,9 @@ import argparse
 
 import dbus
 import dbus.service
-if getattr(dbus, 'version', (0, 0, 0)) < (0, 80, 0):
-    import dbus.glib
-else:
-    from dbus.mainloop.glib import DBusGMainLoop
-    DBusGMainLoop(set_as_default=True)
+
+from dbus.mainloop.glib import DBusGMainLoop
+DBusGMainLoop(set_as_default=True)
 
 import logging, logging.handlers
 
