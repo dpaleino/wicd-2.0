@@ -182,9 +182,14 @@ def main(argv):
     logging.info('Wicd starting...')
 
     # Open the DBUS session
-    bus = dbus.SystemBus()
-    wicd_bus = dbus.service.BusName('org.wicd', bus=bus)
-    daemon = WicdDaemon(wicd_bus, options)
+    try:
+        bus = dbus.SystemBus()
+        wicd_bus = dbus.service.BusName('org.wicd', bus=bus)
+        daemon = WicdDaemon(wicd_bus, options)
+    except dbus.exceptions.DBusException, e:
+        logging.critical("DBus issue: %s" % e.message)
+        logging.critical("Wicd exiting")
+        sys.exit(1)
 
     gobject.threads_init()
 
