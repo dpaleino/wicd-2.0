@@ -47,23 +47,13 @@ def setup_logging():
     Setup the logging facility.
     This function must be called before everything else, to allow
     very early logging of messages.
+
+    Initial logging will be to console.
     """
 
     logging.basicConfig(level=logging.DEBUG,
-                    format='%(levelname)-8s %(message)s',
-                    datefmt='%Y%b%d %H:%M:%S')
-    logfile = logging.handlers.RotatingFileHandler(
-        '/var/log/wicd/wicd.log',
-        maxBytes=1024*1024,
-        backupCount=3
-    )
-    logfile.setFormatter(
-        logging.Formatter(
-            '%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d: %(message)s'
-        )
-    )
-    logging.getLogger().addHandler(logfile)
-
+        format='%(asctime)s %(levelname)-8s %(filename)s %(lineno)s %(message)s',
+        datefmt='%H:%M:%S')
 
 def daemonize():
     """ Disconnect from the controlling terminal.
@@ -78,6 +68,7 @@ def daemonize():
     """
     # Fork the first time to disconnect from the parent terminal and
     # exit the parent process.
+    logging.info("Sending daemon to the background")
     try:
         pid = os.fork()
         if pid > 0:
@@ -135,32 +126,86 @@ def main(argv):
     """
 
     p = argparse.ArgumentParser()
-    p.add_argument('-f', '--no-daemon', action='store_true')
-    p.add_argument('-o', '--no-stdout', action='store_true')
-    p.add_argument('-e', '--no-stderr', action='store_true')
+    p.add_argument('-v',
+                    dest="verbose",
+                    action='count',
+                    default=0)
+    p.add_argument('-l', '--logfile',
+                    dest="logfile",
+                    action="store",
+                    default="/var/log/wicd/wicd.log")
+    p.add_argument('-f', '--no-daemon',
+                   dest="no_daemon",
+                   action='store_true',
+                   default=False)
+    p.add_argument('-o', '--no-stdout',
+                   dest="no_stdout",
+                   action='store_true',
+                   default=False)
+    p.add_argument('-e', '--no-stderr',
+                   dest="no_stderr",
+                   action='store_true',
+                   default=False)
 
     options = p.parse_args()
 
-    if not options.no_daemon: daemonize()
+    if options.verbose >= 2:
+        loglevel=logging.DEBUG
+    elif options.verbose >=1:
+        loglevel=logging.INFO
+    else:
+        loglevel=logging.WARN
+
+    if not options.no_daemon:
+        logging.debug("Setting log file to %s" % options.logfile)
+        # Set file logging to loglevel
+        logfile = logging.handlers.RotatingFileHandler(
+            options.logfile,
+            maxBytes=1024*1024,
+            backupCount=3
+        )
+        logfile.setFormatter(
+            logging.Formatter(
+            '%(asctime)s:%(levelname)s:%(filename)s:%(funcName)s:%(lineno)d: %(message)s'
+            )
+        )
+        logfile.setLevel(loglevel)
+        logging.getLogger().addHandler(logfile)
+        # put screen logging threshold to something not in logging
+        # so terminal doesn't get funky messages if they leave it open
+        logging.basicConfig(level=logging.CRITICAL*2)
+        daemonize()
+    else:
+        # Staying foreground so set log level accordingly
+        logging.basicConfig(level=loglevel)
 
     logging.info('Wicd starting...')
 
     # Open the DBUS session
-    bus = dbus.SystemBus()
-    wicd_bus = dbus.service.BusName('org.wicd', bus=bus)
-    daemon = WicdDaemon(wicd_bus, options)
+    try:
+        bus = dbus.SystemBus()
+        wicd_bus = dbus.service.BusName('org.wicd', bus=bus)
+        daemon = WicdDaemon(wicd_bus, options)
+    except dbus.exceptions.DBusException, e:
+        logging.critical("DBus issue: %s" % e.message)
+        logging.critical("Wicd exiting")
+        sys.exit(1)
 
     gobject.threads_init()
 
     # Enter the main loop
     mainloop = gobject.MainLoop()
+    logging.debug("mainloop.run() starting")
     mainloop.run()
+
 
 if __name__ == '__main__':
     setup_logging()
     # Check if the root user is running
     if os.getuid() != 0:
         logging.critical("Root privileges are required for the daemon to run properly.")
+        logging.critical("Wicd exiting")
         sys.exit(1)
 
+    logging.debug("Initializing services")
     main(sys.argv)
